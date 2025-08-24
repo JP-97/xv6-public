@@ -61,17 +61,23 @@ kfree(char *v)
 {
   struct run *r;
 
-  if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
-    panic("kfree");
+  if((uint)v % PGSIZE)
+    panic("not on page boundary!");
+  else if(v < end)
+    panic("page boundary is too low!");
+  else if(V2P(v) >= PHYSTOP)
+    panic("freeing high address!");
 
   // Fill with junk to catch dangling refs.
   memset(v, 1, PGSIZE);
 
   if(kmem.use_lock)
     acquire(&kmem.lock);
+
   r = (struct run*)v;
   r->next = kmem.freelist;
   kmem.freelist = r;
+
   if(kmem.use_lock)
     release(&kmem.lock);
 }
@@ -88,9 +94,10 @@ kalloc(void)
     acquire(&kmem.lock);
   r = kmem.freelist;
   if(r)
+  {
     kmem.freelist = r->next;
+  }
   if(kmem.use_lock)
     release(&kmem.lock);
   return (char*)r;
 }
-
