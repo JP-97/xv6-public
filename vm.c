@@ -79,6 +79,30 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
   return 0;
 }
 
+
+// Copy page directory entries from src page directory 
+// to destination page directory starting at va
+static int copypagedirentries(pde_t *dest, pde_t *src, void *va, uint size)
+{
+  // This is the 20 bit addr, but we want to increment by pgdir entries
+  // This means strip of first 10 bits of start and last to 
+  // calculate first and last page dir entry - increment by each entry 
+  uint start = (uint) PDX(va); 
+  uint last =  (uint) PDX(va + size -1); // If last address resides on boundary, round down
+  uint entriescopied = 0;
+
+  for(uint a = start; a <= last; a+=1)
+  {
+    if(!(src[a] & PTE_P))
+      panic("Page isn't mapped in master table!");
+    
+    dest[a] = src[a];
+    entriescopied++;
+  }
+
+  return entriescopied;
+}
+
 // There is one page table per process, plus one that's used when
 // a CPU is not running any process (kpgdir). The kernel uses the
 // current process's page table during system calls and interrupts;
@@ -115,23 +139,38 @@ static struct kmap {
 };
 
 // Set up kernel part of a page table.
+// If this is the first time being called, create the full page table.
+// Otherwise, re-use the kpgdir entires mapped by the first cpu. 
 pde_t*
 setupkvm(void)
 {
   pde_t *pgdir;
   struct kmap *k;
 
+  // Each process will still get a unique page table directory
   if((pgdir = (pde_t*)kalloc()) == 0)
     return 0;
   memset(pgdir, 0, PGSIZE);
   if (P2V(PHYSTOP) > (void*)DEVSPACE)
     panic("PHYSTOP too high");
   for(k = kmap; k < &kmap[NELEM(kmap)]; k++)
-    if(mappages(pgdir, k->virt, k->phys_end - k->phys_start,
-                (uint)k->phys_start, k->perm) < 0) {
-      freevm(pgdir);
-      return 0;
+  {
+    uint segsize = k->phys_end - k->phys_start;
+    if(!kpgdir){
+      // First CPU to run will have responsibility
+      // of populating kpgdir
+      if(mappages(pgdir, k->virt, segsize,
+                  (uint)k->phys_start, k->perm) < 0) {
+        freevm(pgdir);
+        return 0;
+      }
+      continue; 
     }
+
+    // Copy kernel page dir entries for new page dir being set up
+    copypagedirentries(pgdir, kpgdir, k->virt, segsize);
+  }
+
   return pgdir;
 }
 
@@ -287,12 +326,17 @@ freevm(pde_t *pgdir)
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
+  else if(pgdir == kpgdir)
+    panic("freeing kpgdir!");
   deallocuvm(pgdir, KERNBASE, 0);
   for(i = 0; i < NPDENTRIES; i++){
-    if(pgdir[i] & PTE_P){
-      char * v = P2V(PTE_ADDR(pgdir[i]));
-      kfree(v);
+    // Only free the page table if it's
+    // not referencing memory in kernel region
+    if(i >= PDX(KERNBASE) || !(pgdir[i] & PTE_P)){
+      continue;
     }
+    char *v = P2V(PTE_ADDR(pgdir[i]));
+    kfree(v);
   }
   kfree((char*)pgdir);
 }
