@@ -16,6 +16,8 @@ struct {
   struct file file[NFILE];
 } ftable;
 
+int readcount;
+
 void
 fileinit(void)
 {
@@ -100,6 +102,10 @@ fileread(struct file *f, char *addr, int n)
 
   if(f->readable == 0)
     return -1;
+
+  // valid read - increment readcount
+  readcount++;
+
   if(f->type == FD_PIPE)
     return piperead(f->pipe, addr, n);
   if(f->type == FD_INODE){
