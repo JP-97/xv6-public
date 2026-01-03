@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "pstat.h"
 
 int
 sys_fork(void)
@@ -67,10 +68,12 @@ sys_sleep(void)
   acquire(&tickslock);
   ticks0 = ticks;
   while(ticks - ticks0 < n){
-    if(myproc()->killed){
+    struct proc *p = myproc();
+    if(p->killed){
       release(&tickslock);
       return -1;
     }
+
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
@@ -89,3 +92,32 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// Set number of tickets allocated to calling process.
+// Higher number means higher scehduling frequency.
+int
+sys_settickets(void)
+{
+  int n;
+
+  if(argint(0, &n) < 0)
+    return -1;
+
+  else if(n < MIN_NUM_TICKETS || n > MAX_NUM_TICKETS)
+    return -1;
+
+  return setnumtix(n);
+}
+
+// Get information about all processes in the system
+int
+sys_getpinfo(void)
+{
+  struct pstat *result;
+
+  if(argptr(0, (void *)&result, sizeof(struct pstat)) < 0)
+    return -1;
+
+  return getprocessinfo(result);
+}
+

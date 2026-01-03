@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -18,7 +19,10 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 
+static uint state = 1;
 static void wakeup1(void *chan);
+static uint holdlottery(uint totalnumtix);
+static uint random(uint *state, uint max);
 
 void
 pinit(void)
@@ -88,6 +92,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->time = 0;
 
   release(&ptable.lock);
 
@@ -141,6 +146,8 @@ userinit(void)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
+
+  p->numtix = DEFAULT_NUM_TICKETS;
 
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
@@ -211,6 +218,9 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+
+  // Child process inherits same number of tickets allocated to parent
+  np->numtix = curproc->numtix;
 
   acquire(&ptable.lock);
 
@@ -325,33 +335,69 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  uint totalnumtix;
+  uint ticketscounted;
   
   for(;;){
+    totalnumtix = 0;
+    ticketscounted = 0;
+
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
+    // Note that interrupts will be disabled again as part of acquire
     acquire(&ptable.lock);
+
+    // Calculate the total number of tickets in system
+    // based on runnable processes
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNABLE)
+        // TODO: Eventually, if runnable processes are in their own table, no need for this check
+        totalnumtix += p->numtix;
+    }
+    
+    if(totalnumtix == 0)
+      // No runnable process was found... nothing more to do
+      goto done;
+
+    // Hold lottery and figure out the lucky winner
+    uint winner = holdlottery(totalnumtix);
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+      else if(winner > (ticketscounted + p->numtix)){
+        // winning ticket is not within selected process' "range"
+        ticketscounted += p->numtix;
+        continue;
+      }
+      
+      // p's ticket count falls in the range of (ticketscounted, ticketscounted + p->numtix) 
+      break;
     }
-    release(&ptable.lock);
 
+    if(p->state != RUNNABLE)
+      // No winner process was found... nothing more to do
+      goto done;
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+done:
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+
+    release(&ptable.lock);
   }
 }
 
@@ -433,6 +479,7 @@ sleep(void *chan, struct spinlock *lk)
   // so it's okay to release lk.
   if(lk != &ptable.lock){  //DOC: sleeplock0
     acquire(&ptable.lock);  //DOC: sleeplock1
+    
     release(lk);
   }
   // Go to sleep.
@@ -462,6 +509,34 @@ wakeup1(void *chan)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
       p->state = RUNNABLE;
+}
+
+static uint
+random(uint *state, uint max)
+{
+  *state = ((unsigned long) *state) * 48271 % 0x7fffffff;
+  return *state % max;
+}
+
+// Hold a lottery to decide the lucky winner that gets
+// to run next
+static uint
+holdlottery(uint totalnumtix)
+{
+  return totalnumtix ? random(&state, totalnumtix) : 0;
+}
+
+int
+setnumtix(uint amount)
+{
+  acquire(&ptable.lock);
+
+  struct proc *currproc = myproc();
+  
+  currproc->numtix = amount;
+
+  release(&ptable.lock);
+  return 0;
 }
 
 // Wake up all processes sleeping on chan.
@@ -531,4 +606,39 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+// Update p at index i based on proc pref
+static void
+updatepstat(struct pstat *p, int index, struct proc *pref)
+{
+  if(!pref)
+    return;
+  else if(index < 0 || index >= NPROC)
+    return;
+
+  p->inuse[index] = (pref->state == RUNNING || pref->state == SLEEPING || pref->state == RUNNABLE) ? 1 : 0;
+  p->tickets[index] = pref->numtix;
+  p->pid[index] = pref->pid;
+  p->ticks[index] = pref->time;
+}
+
+int
+getprocessinfo(struct pstat *pinfo)
+{
+  if(!pinfo)
+  {
+    cprintf("Invalid process info reference!\n");
+    return -1;
+  }
+  
+  acquire(&ptable.lock);
+  
+  for(int i=0; i < NPROC; i++)
+  {
+    updatepstat(pinfo, i, &ptable.proc[i]);
+  }
+
+  release(&ptable.lock);
+  return 0;
 }

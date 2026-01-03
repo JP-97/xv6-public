@@ -7,11 +7,32 @@
 #include "syscall.h"
 #include "traps.h"
 #include "memlayout.h"
+#include "pstat.h"
 
 char buf[8192];
 char name[3];
 char *echoargv[] = { "echo", "ALL", "TESTS", "PASSED", 0 };
 int stdout = 1;
+
+void
+pinfotest(void)
+{
+  struct pstat p;
+  memset(&p, 0, sizeof(struct pstat));
+
+  printf(stdout, "Address of p: %d\n", &p);
+
+  if(getpinfo(&p) < 0)
+  {
+    printf(stdout, "pinfo failed!\n");
+    exit();
+  }
+
+  for(int i=0; i<NPROC; i++)
+  {
+    printf(stdout, "process %d has %d tickets\n", i, p.tickets[i]);
+  }
+}
 
 // does chdir() call iput(p->cwd) in a transaction?
 void
@@ -1755,6 +1776,8 @@ main(int argc, char *argv[])
     exit();
   }
   close(open("usertests.ran", O_CREATE));
+
+  pinfotest();
 
   argptest();
   createdelete();
