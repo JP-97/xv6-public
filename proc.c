@@ -23,6 +23,7 @@ static uint state = 1;
 static void wakeup1(void *chan);
 static uint holdlottery(uint totalnumtix);
 static uint random(uint *state, uint max);
+static void sortprocesses(void);
 
 void
 pinit(void)
@@ -349,6 +350,8 @@ scheduler(void)
     // Note that interrupts will be disabled again as part of acquire
     acquire(&ptable.lock);
 
+    sortprocesses();
+
     // Calculate the total number of tickets in system
     // based on runnable processes
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -537,6 +540,49 @@ setnumtix(uint amount)
 
   release(&ptable.lock);
   return 0;
+}
+
+
+static void
+swap(uint *x, uint *y)
+{
+  if(!x || !y)
+    return;
+
+  uint temp = *y;
+  *y = *x;
+  *x = temp;  
+}
+
+
+// Sort the processes with a
+// bubble sort based on number of tickets
+// NOTE: Assumption is this function is called
+// while already holding ptable.lock
+static void
+sortprocesses(void)
+{
+  int i;
+  int j;
+  int swapped; 
+
+  struct proc *p = ptable.proc;
+
+  for(i=0; i < NPROC - 1; i++){
+    // total number of iterations needed to sort
+    swapped = 0;
+
+    for(j=0; j < (NPROC - 1 - i); j++){ // amount of numbers we need to check for this iteration
+      if(p[j].numtix > p[j+1].numtix){
+        swap(&p[j].numtix, &p[j+1].numtix);
+        swapped = 1;
+      }
+    }
+
+    if(!swapped)
+      // Nothing was swapped... everything is sorted
+      break;
+  }
 }
 
 // Wake up all processes sleeping on chan.
