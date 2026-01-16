@@ -9,6 +9,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct pstat;
 
 // bio.c
 void            binit(void);
@@ -120,6 +121,13 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             setnumtix(uint amount);
+int             getprocessinfo(struct pstat *);
+
+#define DEFAULT_NUM_TICKETS 1
+#define MAX_NUM_TICKETS 100
+#define MIN_NUM_TICKETS DEFAULT_NUM_TICKETS
+
 
 // swtch.S
 void            swtch(struct context**, struct context*);

@@ -8114,3 +8114,637 @@ Error while running hook_stop:
 No registers.
 Error detected on fd 0
 error detected on stdin
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x801043e0: file proc.c, line 622.
+Continuing.
+[Inferior 1 (process 1) exited normally]
+Error while running hook_stop:
+No registers.
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x801043e0: file proc.c, line 622.
+Continuing.
+The target architecture is assumed to be i386
+=> 0x801043e0 <getprocessinfo>:	endbr32 
+
+Thread 1 hit Breakpoint 1, getprocessinfo (pinfo=0xcbb0 "") at proc.c:622
+622	{
+Undefined command: "ls".  Try "help".
+#0  getprocessinfo (pinfo=0xcbb0 "") at proc.c:622
+#1  0x80105abc in sys_getpinfo () at sysproc.c:119
+#2  0x0000cbb0 in ?? ()
+#3  0x80104c3d in syscall () at syscall.c:145
+#4  0x80103915 in mycpu () at proc.c:49
+#5  0x8dffcfb4 in ?? ()
+#6  0x80105da1 in trap (tf=0x1010101) at trap.c:43
+#7  0x801046b5 in popcli () at spinlock.c:117
+#8  popcli () at spinlock.c:117
+#9  0x01010101 in ?? ()
+#10 0x00000000 in ?? ()
+$6 = 0 '\000'
+$7 = (struct pstat *) 0xcbb0
+$8 = (struct pstat *) 0xcbb0
+$9 = {
+  inuse = {0 <repeats 64 times>},
+  tickets = {0 <repeats 64 times>},
+  pid = {0 <repeats 64 times>},
+  ticks = {0 <repeats 47 times>, 15038, 1, 53151, 1, 0, 0, 0, 53192, 0, 0, 0, 0, 167772160, 0, 0, 0, 49064}
+}
+#1  0x80112e84 in ptable ()
+Detaching from program: , process 1
+Ending remote debugging.
+[Inferior 1 (process 1) detached]
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x80105a90: file sysproc.c, line 113.
+Continuing.
+The target architecture is assumed to be i386
+=> 0x80105a90 <sys_getpinfo>:	endbr32 
+
+Thread 1 hit Breakpoint 1, sys_getpinfo () at sysproc.c:113
+113	{
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x80105a40: file sysproc.c, line 100.
+Continuing.
+[Switching to Thread 1.2]
+The target architecture is assumed to be i386
+=> 0x80105a40 <sys_settickets>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_settickets () at sysproc.c:100
+100	{
+Detaching from program: , process 1
+Remote communication error.  Target disconnected.: Broken pipe.
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x80104190: file proc.c, line 531.
+Continuing.
+[Switching to Thread 1.2]
+The target architecture is assumed to be i386
+=> 0x80104190 <setnumtix>:	endbr32 
+
+Thread 2 hit Breakpoint 1, setnumtix (amount=2) at proc.c:531
+531	{
+Detaching from program: , process 1
+Ending remote debugging.
+[Inferior 1 (process 1) detached]
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Function "dump_process_iinfo" not defined.
+Function "dump_process_info" not defined.
+Undefined command: "getpinfo".  Try "help".
+Breakpoint 1 at 0x801043d0: file proc.c, line 636.
+Continuing.
+The target architecture is assumed to be i386
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Detaching from program: , process 1
+Remote communication error.  Target disconnected.: Broken pipe.
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x801043d0: file proc.c, line 636.
+Continuing.
+The target architecture is assumed to be i386
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 1 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+[Switching to Thread 1.2]
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
+Continuing.
+=> 0x801043d0 <getprocessinfo+48>:	mov    (%eax),%ebx
+
+Thread 2 hit Breakpoint 1, updatepstat (pref=<optimized out>, index=<optimized out>, p=0x80112e84 <ptable+324>) at proc.c:636
+636	    updatepstat(pinfo, i, &ptable.proc[i]);
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x801043c0: file proc.c, line 628.
+Continuing.
+The target architecture is assumed to be i386
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 1 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+[Switching to Thread 1.2]
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Continuing.
+=> 0x801043c0 <getprocessinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, getprocessinfo (pinfo=0x2bc0) at proc.c:628
+628	{
+Detaching from program: , process 1
+Ending remote debugging.
+[Inferior 1 (process 1) detached]
++ target remote localhost:26000
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+The target architecture is assumed to be i8086
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
++ symbol-file kernel
+warning: A handler for the OS ABI "GNU/Linux" is not built into this configuration
+of GDB.  Attempting to continue with the default i8086 settings.
+
+Breakpoint 1 at 0x80105a80: file sysproc.c, line 115.
+Continuing.
+[Switching to Thread 1.2]
+The target architecture is assumed to be i386
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
+Continuing.
+=> 0x80105a80 <sys_getpinfo>:	endbr32 
+
+Thread 2 hit Breakpoint 1, sys_getpinfo () at sysproc.c:115
+115	{
