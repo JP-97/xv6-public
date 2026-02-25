@@ -53,6 +53,7 @@ mycpu(void)
     if (cpus[i].apicid == apicid)
       return &cpus[i];
   }
+
   panic("unknown apicid\n");
 }
 

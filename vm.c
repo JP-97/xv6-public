@@ -6,9 +6,18 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "spinlock.h"
+
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
+
+struct {
+  struct spinlock refcountlock;
+  ushort refcountarr[PHYSTOP / PGSIZE]; // each index holds a ref count to each physical page in the system
+} refcount;
+
+int g_vmdebug = 0; // Set this for added verbosity during page fault handling
 
 // Set up CPU's kernel segment descriptors.
 // Run once on entry on each CPU.
@@ -27,6 +36,8 @@ seginit(void)
   c->gdt[SEG_UCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, DPL_USER);
   c->gdt[SEG_UDATA] = SEG(STA_W, 0, 0xffffffff, DPL_USER);
   lgdt(c->gdt, sizeof(c->gdt));
+
+  initlock(&refcount.refcountlock, "ref_lock");
 }
 
 // Return the address of the PTE in page table pgdir
@@ -42,8 +53,9 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
   if(*pde & PTE_P){
     pgtab = (pte_t*)P2V(PTE_ADDR(*pde));
   } else {
-    if(!alloc || (pgtab = (pte_t*)kalloc()) == 0)
+    if(!alloc || (pgtab = (pte_t*)kalloc()) == 0){
       return 0;
+    }
     // Make sure all those PTE_P bits are zero.
     memset(pgtab, 0, PGSIZE);
     // The permissions here are overly generous, but they can
@@ -71,6 +83,7 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
     if(*pte & PTE_P)
       panic("remap");
     *pte = pa | perm | PTE_P;
+    
     if(a == last)
       break;
     a += PGSIZE;
@@ -91,12 +104,19 @@ static int copypagedirentries(pde_t *dest, pde_t *src, void *va, uint size)
   uint last =  (uint) PDX(va + size -1); // If last address resides on boundary, round down
   uint entriescopied = 0;
 
-  for(uint a = start; a <= last; a+=1)
+  for(uint a = start; a <= last; a++)
   {
     if(!(src[a] & PTE_P))
       panic("Page isn't mapped in master table!");
     
     dest[a] = src[a];
+
+    // Increment the refcount to the page ref that was
+    // taken from parent page dir
+    acquire(&refcount.refcountlock);
+    refcount.refcountarr[(a / PGSIZE)]++;
+    release(&refcount.refcountlock);
+
     entriescopied++;
   }
 
@@ -309,9 +329,13 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       pa = PTE_ADDR(*pte);
       if(pa == 0)
         panic("kfree");
+
       char *v = P2V(pa);
-      kfree(v);
-      *pte = 0;
+      if(kfree(v) == 0){
+        if(g_vmdebug)
+          cprintf("Freed %d\n", pa);
+        *pte = 0;
+      }
     }
   }
   return newsz;
@@ -336,9 +360,12 @@ freevm(pde_t *pgdir)
       continue;
     }
     char *v = P2V(PTE_ADDR(pgdir[i]));
-    kfree(v);
+    if(kfree(v) == 0 && g_vmdebug)
+      cprintf("Freed page %p\n", PTE_ADDR(pgdir[i]));
   }
-  kfree((char*)pgdir);
+
+  if(kfree((char*)pgdir) == 0 && g_vmdebug)
+    cprintf("Freed dir %p\n", PTE_ADDR(pgdir));
 }
 
 // Clear PTE_U on a page. Used to create an inaccessible
@@ -356,36 +383,194 @@ clearpteu(pde_t *pgdir, char *uva)
 
 // Given a parent process's page table, create a copy
 // of it for a child.
+// All pages from parent and child which are writable get marked
+// as read-only until they're next accessed for a write
+// where they'll be copied
 pde_t*
 copyuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
-  pte_t *pte;
-  uint pa, i, flags;
-  char *mem;
+  pte_t *pgtab_orig, *pgtab;
+  uint i, flags_orig, flags_new;
 
   if((d = setupkvm()) == 0)
     return 0;
   for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+    if((pgtab_orig = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P))
+    if(!(*pgtab_orig & PTE_P))
       panic("copyuvm: page not present");
-    pa = PTE_ADDR(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto bad;
-    memmove(mem, (char*)P2V(pa), PGSIZE);
-    if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) {
-      kfree(mem);
+    // pa = PTE_ADDR(*pte);
+    flags_orig = PTE_FLAGS(*pgtab_orig);
+    flags_new = flags_orig;
+  
+    if((flags_orig & PTE_U) && (flags_orig & PTE_W)){
+      // Original parent page is writable and not supervisor page
+      // Clear write perms and set COW flag
+      flags_new = (flags_orig & ~PTE_W) | PTE_COW; 
+    }
+
+    // Set up PTE for child such that it points to
+    // same physical page as parent. The page dir entry
+    // for the child will still be unique so we need to alloc a page. 
+    // Parent pages which were writable are 
+    // set with copy-on-write set and read-only perms
+    if((pgtab = walkpgdir(d, (void*)i, 1)) == 0){
       goto bad;
     }
+
+    // Assign same contents as parent process
+    *pgtab = *pgtab_orig; // Point to same physical page as parent
+    *pgtab &= ~0xFFF; // Clear original existing flags
+    *pgtab |= flags_new; // Assign new flags
+
+    // increment the ref count to parent phy page
+    incrementrefcount(PTE_ADDR(*pgtab), 1);
+
+    // Also update the parent page to be COW
+    // We don't want parent writes to leak to child after fork!
+    if(flags_orig != flags_new){
+      *pgtab_orig &= ~0xFFF;
+      *pgtab_orig |= flags_new;
+    }
   }
+
+  // For CPU to fetch updated pte(s) for parent processes
+  flushtlb();
   return d;
 
 bad:
   freevm(d);
   return 0;
+}
+
+// For the provided pte and faulting_addr, allocate a new
+// page and update the flags accordinly
+static int make_writeable_copy(pte_t *pte_orig, uint faulting_addr)
+{
+  uint flags;
+  char *new_page;
+  
+  if (g_vmdebug)
+    cprintf("Original PTE phy: %d, Original PTE flags: %d\n", PTE_ADDR(*pte_orig), PTE_FLAGS(*pte_orig));
+
+  flags = PTE_FLAGS(*pte_orig);
+  flags &= ~PTE_COW; // Clear the COW flag
+  flags |= PTE_W;    // Set page to writable
+  
+  if(getrefcount(PTE_ADDR(*pte_orig), 1) == 1){
+    // This handles a corner case where one of the parent/child
+    // has already been deallocated prior to COW request.
+    // In this case, don't need to alloc a new page - just update flags.
+    *pte_orig &= ~0xFFF;
+    *pte_orig |= flags;
+    goto done;
+  }
+
+  uint page_boundary = PGROUNDDOWN(faulting_addr);
+
+  if((new_page = kalloc()) == 0){
+    cprintf("Failed to alloc new page for faulting PID: %d\n", myproc()->pid);
+    return 0;    
+  }
+
+  // Copy over the contents of the original faulting page
+  memmove(new_page, (char*)page_boundary, PGSIZE);
+
+  // decrement ref count to the old page which initiated the fault
+  decrementrefcount(PTE_ADDR(*pte_orig), 1);
+
+  // Update the page table entry to point to new page
+  // and increment ref count to new page
+  *pte_orig = V2P(new_page) | flags;
+
+done:
+  if (g_vmdebug)
+    cprintf("New PTE phy: %d, New PTE flags: %d\n", PTE_ADDR(*pte_orig), PTE_FLAGS(*pte_orig));
+
+  // Invalidate TLB so next lookup will walk page table
+  // and update PTE 
+  flushtlb();
+  return 1;
+}
+
+
+// If the right criteria are met,
+// make a writeable copy of the page containing the
+// address that triggered the fault
+void
+copypage(struct trapframe *tf, uint pagedir, uint addr)
+{
+  pte_t *pte;
+
+  if(!tf)
+    panic("Page Fault with invalid trap frame!\n");
+  
+  else if(pagedir < 0 || pagedir > PHYSTOP)
+    panic("Page fault with invalid page dir!\n");
+
+  else if(addr < 0 || addr >= KERNBASE)
+    panic("Faulting address is above KERNBASE!\n");
+
+  // To get the PTE, need the Virtual representation of page dir
+  // Initially, it contains the contents of cr3 reg which is the
+  // physical addr
+  pagedir += KERNBASE; 
+
+  // The Page-Fault error code is a 3 bit register
+  // that gets pushed on the stack at the time of the
+  // fault.
+  int is_prot_violation = tf->err & 0x1;
+  int is_write = tf->err & 0x2;
+  int is_user_mode = tf->err & 0x4;
+  int is_unmapped_page = !is_prot_violation;
+
+  if(!is_write || is_unmapped_page){
+    cprintf("Page fault for address 0x%x\nis read operation: %s\nis page present: %s\nErr:%x\n", addr,
+                                                                                                 is_write ? "False" : "True",
+                                                                                                 is_unmapped_page ? "False" : "True",
+                                                                                                 tf->err);
+    
+    pte_t *pte_debug = walkpgdir((pde_t *) pagedir, (void *)addr, 0);
+
+  if(pte_debug)
+      cprintf("PTE: 0x%x, PTE Phys = %p, PTE Flags: %x\n", pte_debug, PTE_ADDR(*pte_debug), PTE_FLAGS(*pte_debug));
+  else
+      cprintf("PTE was not retrievable!\nPDE: 0x%x, ADDR: 0x%x\n", pagedir, addr);
+    panic("Unexpected page fault");
+  }
+
+  else if(is_prot_violation && !is_user_mode)
+    // Can't have a protection violation while in supervisor mode...  
+    return;
+
+  // Page fault is for a Write on a page that's present but 
+  // has invalid "protection". Get the PTE for the address for
+  // further inspection.
+  
+  if (g_vmdebug){
+    cprintf("Page fault caused trying to access 0x%x\n", addr);
+    cprintf("Page fault stats: %s, %s, %s\n", 
+            (tf->err & 0x4) ? "U" : "S", 
+            (tf->err & 0x2) ? "W" : "R",
+            (tf->err & 0x1) ? "Protection Violation" : "Not Present");
+  }
+
+  pte = walkpgdir((pde_t *) pagedir, (void *)addr, 0);
+
+  if(!pte)
+    panic("Could not find PTE for faulting address!\n");
+
+  else if(!(*pte & PTE_U))
+    panic("Page fault not supported for supervisor pages!\n");
+  
+  else if(!(*pte & PTE_COW))
+    panic("Faulting address is not marked for copy-on-write!\n");
+
+  // Fault looks legitimate - copy and map the page!
+  if(make_writeable_copy(pte, addr) == 0){
+    myproc()->killed = 1; // This will cause trap() to invoke exit()
+  }
 }
 
 //PAGEBREAK!
@@ -427,6 +612,89 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
     va = va0 + PGSIZE;
   }
   return 0;
+}
+
+// Decrement the refcount corresponding to the
+// provided physical page address.
+int decrementrefcount(uint phypg, int uselock) 
+{
+  int refcount_tmp = 0;
+  if(phypg % PGSIZE != 0)
+    // Invalid physical page reference provided  
+    return -1;
+  
+  if(uselock)
+    acquire(&refcount.refcountlock);
+
+  if(refcount.refcountarr[phypg / PGSIZE] < 0)
+    panic("Ref count below 0 detected!");
+  
+  else if(refcount.refcountarr[phypg / PGSIZE] == 0)
+    goto release_and_return;
+
+  refcount_tmp = refcount.refcountarr[phypg / PGSIZE]--;
+
+release_and_return:
+  if(uselock)
+    release(&refcount.refcountlock);
+  
+  return refcount_tmp; 
+}
+
+// Increment the refcount corresponding to the
+// provided physical page address.
+int incrementrefcount(uint phypg, int uselock)
+{
+  int refcount_tmp = 0;
+  if(phypg % PGSIZE != 0)
+    // Invalid physical page reference provided  
+    return -1;
+
+  if(uselock)
+    acquire(&refcount.refcountlock);
+  
+  refcount_tmp = refcount.refcountarr[phypg / PGSIZE]++;
+
+  if(uselock)
+    release(&refcount.refcountlock);
+
+  return refcount_tmp; 
+}
+
+// Increment the refcount corresponding to the
+// provided physical page address.
+int getrefcount(uint phypg, int uselock)
+{
+  int refcount_tmp = 0;
+  if(phypg % PGSIZE != 0)
+    // Invalid physical page reference provided  
+    return -1;
+
+  if(uselock)
+    acquire(&refcount.refcountlock);
+  
+  refcount_tmp = refcount.refcountarr[phypg / PGSIZE];
+
+  if(uselock)
+    release(&refcount.refcountlock);
+
+  return refcount_tmp; 
+}
+
+// Initialize reference count to 1 for newly allocated page
+void initializerefcount(uint phypg, int uselock)
+{
+  if(phypg % PGSIZE != 0)
+    // Invalid physical page reference provided  
+    panic("Trying to initialize invalid page reference!");
+
+  if(uselock && !holding(&refcount.refcountlock))
+    acquire(&refcount.refcountlock);
+  
+  refcount.refcountarr[phypg / PGSIZE] = 1;
+
+  if(uselock)
+    release(&refcount.refcountlock);
 }
 
 //PAGEBREAK!

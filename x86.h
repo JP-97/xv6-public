@@ -138,10 +138,24 @@ rcr2(void)
   return val;
 }
 
+static inline uint
+rcr3(void)
+{
+  uint val;
+  asm volatile("movl %%cr3,%0" : "=r" (val));
+  return val;
+}
+
 static inline void
 lcr3(uint val)
 {
   asm volatile("movl %0,%%cr3" : : "r" (val));
+}
+
+static inline void
+flushtlb(void)
+{
+  lcr3(rcr3());
 }
 
 //PAGEBREAK: 36

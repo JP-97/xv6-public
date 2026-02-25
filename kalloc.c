@@ -56,10 +56,13 @@ freerange(void *vstart, void *vend)
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
 // initializing the allocator; see kinit above.)
-void
+// Returns the reference count to the provided
+// physical memory reference.
+int
 kfree(char *v)
 {
   struct run *r;
+  uint refcount;
 
   if((uint)v % PGSIZE)
     panic("not on page boundary!");
@@ -68,9 +71,11 @@ kfree(char *v)
   else if(V2P(v) >= PHYSTOP)
     panic("freeing high address!");
 
-  // Fill with junk to catch dangling refs.
-  memset(v, 1, PGSIZE);
+  if((refcount = decrementrefcount(V2P(v), kmem.use_lock)) > 0)
+    // There's still active references to this page!  
+    return refcount;
 
+  // Fill with junk to catch dangling refs.
   if(kmem.use_lock)
     acquire(&kmem.lock);
 
@@ -80,6 +85,8 @@ kfree(char *v)
 
   if(kmem.use_lock)
     release(&kmem.lock);
+
+  return 0;
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -96,6 +103,9 @@ kalloc(void)
   if(r)
   {
     kmem.freelist = r->next;
+    // Whenever a page is allocated, make sure the
+    // page's ref count is set to 1
+    initializerefcount(V2P(r), kmem.use_lock);
   }
   if(kmem.use_lock)
     release(&kmem.lock);
