@@ -10,6 +10,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 struct pstat;
+struct trapframe;
 
 // bio.c
 void            binit(void);
@@ -66,7 +67,7 @@ void            ioapicinit(void);
 
 // kalloc.c
 char*           kalloc(void);
-void            kfree(char*);
+int             kfree(char*);
 void            kinit1(void*, void*);
 void            kinit2(void*, void*);
 
@@ -182,6 +183,7 @@ void            uartputc(int);
 void            seginit(void);
 void            kvmalloc(void);
 pde_t*          setupkvm(void);
+void            copypage(struct trapframe*, uint, uint);
 char*           uva2ka(pde_t*, char*);
 int             allocuvm(pde_t*, uint, uint);
 int             deallocuvm(pde_t*, uint, uint);
@@ -193,6 +195,10 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
+int             decrementrefcount(uint phypg, int uselock);
+int             incrementrefcount(uint phypg, int uselock);
+int             getrefcount(uint phypg, int uselock);
+void            initializerefcount(uint phypg, int uselock);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
