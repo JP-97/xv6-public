@@ -41,6 +41,7 @@ struct proc {
   char *kstack;                // Bottom of kernel stack for this process
   enum procstate state;        // Process state
   int pid;                     // Process ID
+  struct proc *mainpid;        // Process ID for main thread in program
   struct proc *parent;         // Parent process
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
@@ -52,6 +53,7 @@ struct proc {
   uint numtix;                 // Number of tickets allocated to process
   uint lastscheduled;          // ticks count last time the process was scheduled
   uint time;                   // Number of "ticks" this process has been running
+  ushort numthreads;           // Number of threads belonging to this process (only relevant for parent pid)
 };
 
 // Process memory is laid out contiguously, low addresses first:

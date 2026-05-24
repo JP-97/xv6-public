@@ -7,11 +7,46 @@
 #include "mmu.h"
 #include "proc.h"
 #include "pstat.h"
+#include "clone.h"
 
 int
 sys_fork(void)
 {
   return fork();
+}
+
+int
+sys_clone(void)
+{
+  char* fn;
+  char* stack;
+  char* args;
+  char* clargs;
+  
+  if(argptr(0, &fn, sizeof(void*)) != 0)
+  {
+    return -1;
+  }
+
+  if(argptr(1, &stack, sizeof(void*)) != 0)
+  {
+    return -1;
+  }
+  
+  if(argptr(2, &args, sizeof(void*)) != 0)
+  {
+    return -1;
+  }
+
+  if(argptr(3, &clargs, sizeof(struct clone_args*)) != 0)
+  {
+    return -1;
+  }
+
+  return clone((int (*)(void*)) fn,
+               (void *) stack,
+               (void *) args,
+               (struct clone_args *) clargs);
 }
 
 int

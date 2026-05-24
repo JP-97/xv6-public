@@ -222,7 +222,7 @@ switchuvm(struct proc *p)
   if(p->pgdir == 0)
     panic("switchuvm: no pgdir");
 
-  pushcli();
+  pushcli(); 
   mycpu()->gdt[SEG_TSS] = SEG16(STS_T32A, &mycpu()->ts,
                                 sizeof(mycpu()->ts)-1, 0);
   mycpu()->gdt[SEG_TSS].s = 0;
@@ -509,8 +509,11 @@ copypage(struct trapframe *tf, uint pagedir, uint addr)
   else if(pagedir < 0 || pagedir > PHYSTOP)
     panic("Page fault with invalid page dir!\n");
 
-  else if(addr < 0 || addr >= KERNBASE)
+  else if(addr < 0 || addr >= KERNBASE) {
+    cprintf("ADDR: %d\n", addr);
     panic("Faulting address is above KERNBASE!\n");
+
+  }
 
   // To get the PTE, need the Virtual representation of page dir
   // Initially, it contains the contents of cr3 reg which is the

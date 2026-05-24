@@ -32,4 +32,5 @@ SYSCALL(uptime)
 SYSCALL(getreadcount)
 SYSCALL(settickets)
 SYSCALL(getpinfo)
+SYSCALL(clone)
 

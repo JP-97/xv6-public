@@ -11,6 +11,7 @@ struct stat;
 struct superblock;
 struct pstat;
 struct trapframe;
+struct clone_args;
 
 // bio.c
 void            binit(void);
@@ -108,6 +109,8 @@ int             pipewrite(struct pipe*, char*, int);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);
+int             clone(int (*)(void *), void*, void*, struct clone_args*);
+// void            killchildthreads(struct proc *p);s
 int             growproc(int);
 int             kill(int);
 struct cpu*     mycpu(void);

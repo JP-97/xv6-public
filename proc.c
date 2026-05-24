@@ -145,6 +145,8 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
+  p->numthreads = 1;
+
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
@@ -204,9 +206,12 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+
   np->sz = curproc->sz;
+  np->mainpid = np;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->numthreads = 1;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -232,6 +237,93 @@ fork(void)
   return pid;
 }
 
+// Creates a new 'process' (thread) which re-uses the VM and fds
+// of the caller.
+// Newly created proc will have its own kern thread, state,
+// pid, tf, context, chan, etc.
+// Processes created through a call to clone will be linked
+// to their parent proc via parent proc ID.
+// Returns newly allocated TID, otherwise -1;
+int clone(int (*fn)(void *), void* stack, void* fn_args, struct clone_args* clargs)
+{
+  // int i, pid;
+  struct proc *nt;
+  struct proc *curproc = myproc();
+
+  // Get/Validate clone input params
+  // Currently, clargs doesn't do anything useful.
+  if (!fn || (uint)fn > curproc->sz)
+  {
+    cprintf("Invalid thread function reference!\n");
+    return -1;
+  }
+ 
+  if (!stack || (uint)stack > curproc->sz)
+  {
+    cprintf("Invalid stack reference!\n");
+    return -1;
+  }
+
+  cprintf("CLONE: function ptr: %p, stack ptr: %p\n", fn, stack);
+
+  // Allocate new process (TID), create kstack and set up
+  // initial trap frame.
+  // This will set up the kernel thread to start in forkret
+  // which will release the ptable lock and immediately fall through to trapret,
+  // which will pop the tf registers for our cloned thread.
+  if((nt = allocproc()) == 0){
+    return -1;
+  }
+
+  // new thread will share the same VM as the caller
+  // therefore the size and pgdir are copied 1:1
+  nt->sz = curproc->sz;
+  nt->pgdir = curproc->pgdir;
+
+  // Threads have no hierarchy...
+  // Point everything back to initial thread that was created during fork
+  nt->parent = curproc->mainpid; 
+  nt->mainpid = curproc->mainpid;
+
+  cprintf("TID %d, Parent TID is:%d\n", nt->pid, nt->mainpid->pid);
+
+  // Set the stack and instructions pointers for the new
+  // thread to point to the stac/function specified by the
+  // original caller
+
+  // TODO: Not sure where, but likely in uspace lib, make sure this allocs a guardpage
+  // TODO: Figure out how to stage args passed to clone on new stack so they can be consumed by fn - just need to put them in right spot
+  nt->tf->esp = (uint) stack; 
+  nt->tf->eip = (uint)fn;
+
+
+  // Set up the segment selectors
+  // These are used to satisfy the flat segmentation
+  // model when we switch to the new thread 
+  nt->tf->cs = (SEG_UCODE << 3) | DPL_USER;
+  nt->tf->ds = (SEG_UDATA << 3) | DPL_USER;
+  nt->tf->ss = nt->tf->ds;
+  nt->tf->es = nt->tf->ds;
+  nt->tf->eflags = FL_IF;
+
+  nt->numtix = DEFAULT_NUM_TICKETS;
+  nt->numthreads = 1;
+  nt->cwd = curproc->cwd;
+  safestrcpy(nt->name, "clone", sizeof(nt->name));
+
+  // Copy open FDs
+  for(int i = 0; i < (sizeof(curproc->ofile)/sizeof(struct file*)); i++){
+    nt->ofile[i] = curproc->ofile[i];
+  }
+
+  acquire(&ptable.lock);
+  nt->state = RUNNABLE;
+  nt->parent->numthreads++;
+  release(&ptable.lock);
+
+  return nt->pid;
+}
+
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
@@ -241,17 +333,51 @@ exit(void)
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
+  int hasOtherActiveThread;
 
   if(curproc == initproc)
     panic("init exiting");
 
-  // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
+  // Trap main thread in loop while we sentence other threads in the
+  // the group to death and wait for them to exit()
+  if(curproc->mainpid->pid == curproc->pid){
+    while(1){
+      hasOtherActiveThread = 0;
+      acquire(&ptable.lock);
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->mainpid->pid == curproc->pid && p->state != ZOMBIE)
+        {
+          // Sentence any other threads that are part of
+          // thread group to death
+          p->killed =1;
+          hasOtherActiveThread = 1;
+          p->parent = initproc; // re-parent to initproc since main thread died!
+          wakeup1(initproc);
+        }
+      }
+      release(&ptable.lock);
+
+      if(hasOtherActiveThread){
+        // cprintf("still other threads!\n");
+        yield(); // Give up the CPU so that children, which have been marked as killed, can exit()
+      }
+      else
+        break;
     }
   }
+
+
+  // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! This can't be closed until all children are reaped
+  // Close all open files.
+  if(curproc->mainpid->pid == curproc->pid){
+    for(fd = 0; fd < NOFILE; fd++){
+      if(curproc->ofile[fd]){
+        fileclose(curproc->ofile[fd]);
+        curproc->ofile[fd] = 0;
+      }
+    }
+  }
+
 
   begin_op();
   iput(curproc->cwd);
@@ -272,7 +398,14 @@ exit(void)
     }
   }
 
+  // if(curproc->mainpid->state == ZOMBIE && curproc->pid != curproc->mainpid->pid){
+  //   // Re-parent child thread to initproc since the
+  //   // main thread is already dead!
+
+  // }
+
   // Jump into the scheduler, never to return.
+  cprintf("Setting %d to ZOMBIE!\n", curproc->pid);
   curproc->state = ZOMBIE;
   sched();
   panic("zombie exit");
@@ -294,13 +427,36 @@ wait(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != curproc)
         continue;
+
+      pid = p->pid;
+
+      // Check to make sure that no "child" threads
+      // are still active. If there are, go back to
+      // sleep such that they can continue using resources.
+      if(pid == p->mainpid->pid){
+
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+          if(p->mainpid->pid != pid)
+            continue;
+          else if(p->state != UNUSED)
+            // Child thread is still alive or not yet reaped  
+            break;
+        }
+      }
+
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
-        pid = p->pid;
-        kfree(p->kstack);
-        p->kstack = 0;
-        freevm(p->pgdir);
+        if(pid == p->mainpid->pid){
+          // All of a child thread's memory
+          // is managed by parent.
+          // The child stack is part of parent's heap
+          // and so having child free it could corrupt the heap. 
+          kfree(p->kstack);
+          p->kstack = 0;
+          freevm(p->pgdir);
+        }
+          
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;

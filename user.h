@@ -1,6 +1,7 @@
 struct stat;
 struct rtcdate;
 struct pstat;
+struct clone_args;
 
 // system calls
 int fork(void);
@@ -27,6 +28,7 @@ int uptime(void);
 int getreadcount(void);
 int settickets(int);
 int getpinfo(struct pstat*);
+int clone(int (*fn)(void*), void* stack, void* args, struct clone_args* clargs);
 
 // ulib.c
 int stat(const char*, struct stat*);
